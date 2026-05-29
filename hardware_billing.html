@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hardware Shop Billing System</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #f5f4f0; color: #1a1a1a; min-height: 100vh; padding: 1.5rem; }
+
+  h1.app-heading { font-size: 20px; font-weight: 500; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px; }
+
+  .app { display: grid; grid-template-columns: 1fr 340px; gap: 16px; }
+  @media (max-width: 768px) { .app { grid-template-columns: 1fr; } }
+
+  .panel { background: rgb(250, 248, 248); border: 0.5px solid rgba(0,0,0,0.12); border-radius: 12px; padding: 1.25rem; }
+
+  .section-title { font-size: 11px; font-weight: 500; color: #000000; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+
+  .search-bar { display: flex; gap: 8px; margin-bottom: 14px; }
+  .search-bar input { flex: 1; }
+
+  input[type="text"], input[type="number"], select {
+    height: 36px; border-radius: 8px; border: 0.5px solid rgba(0, 0, 0, 0.603);
+    background: #fff; color: #1a1a1a; font-size: 14px; padding: 0 10px; width: 100%;
+    outline: none;
+  }
+  input[type="text"]:focus, input[type="number"]:focus { border-color: #534AB7; box-shadow: 0 0 0 3px rgba(83,74,183,0.12); }
+
+  .cat-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .cat-btn {
+    font-size: 12px; padding: 4px 10px; border-radius: 999px;
+    border: 0.5px solid rgba(0,0,0,0.2); background: #f5f4f0;
+    color: #666; cursor: pointer; font-family: inherit;
+  }
+  .cat-btn:hover { background: #e8e6f8; color: #3C3489; }
+  .cat-btn.active { background: #EEEDFE; color: #3C3489; border-color: #AFA9EC; }
+
+  .product-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
+    gap: 8px; max-height: 360px; overflow-y: auto;
+  }
+  .prod-card {
+    border: 0.5px solid rgba(0,0,0,0.12); border-radius: 8px;
+    padding: 10px; cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  }
+  .prod-card:hover { border-color: rgba(83,74,183,0.5); background: #f9f8ff; }
+  .prod-icon { font-size: 22px; margin-bottom: 6px; }
+  .prod-name { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+  .prod-cat { font-size: 11px; color: #999; margin-bottom: 4px; }
+  .prod-price { font-size: 13px; color: #3C3489; font-weight: 500; }
+  .prod-stock { font-size: 11px; color: #aaa; }
+
+  .bill-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .bill-title { font-size: 15px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+
+  .customer-row { display: flex; gap: 8px; margin-bottom: 14px; }
+
+  .bill-items {
+    border: 0.5px solid rgba(0,0,0,0.12); border-radius: 8px;
+    overflow: hidden; margin-bottom: 12px; min-height: 120px;
+  }
+  .bill-item-row {
+    display: grid; grid-template-columns: 1fr 56px 64px 24px;
+    gap: 4px; align-items: center; padding: 7px 10px;
+    border-bottom: 0.5px solid rgba(0,0,0,0.08); font-size: 13px;
+  }
+  .bill-item-row:last-child { border-bottom: none; }
+  .bill-item-row.header {
+    background: #f5f4f0; font-size: 11px; color: #888; font-weight: 500;
+  }
+
+  .qty-ctrl { display: flex; align-items: center; gap: 4px; }
+  .qty-btn {
+    width: 20px; height: 20px; border-radius: 4px;
+    border: 0.5px solid rgba(0,0,0,0.2); background: #f5f4f0;
+    cursor: pointer; font-size: 14px; display: flex; align-items: center;
+    justify-content: center; color: #1a1a1a; font-family: inherit;
+  }
+  .qty-btn:hover { background: #e8e6f8; }
+  .qty-num { font-size: 13px; min-width: 16px; text-align: center; }
+
+  .del-btn { background: none; border: none; color: #bbb; cursor: pointer; font-size: 15px; padding: 2px; }
+  .del-btn:hover { color: #289b0c; }
+
+  .empty-bill {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 28px 0; color: #bbb; font-size: 13px; gap: 8px;
+  }
+
+  .discount-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .discount-row label { font-size: 13px; color: #666; white-space: nowrap; }
+  .discount-row input { width: 70px; }
+
+  .totals { font-size: 13px; display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+  .totals-row { display: flex; justify-content: space-between; }
+  .totals-row.grand {
+    font-size: 15px; font-weight: 500;
+    border-top: 0.5px solid rgba(0,0,0,0.1); padding-top: 8px; margin-top: 3px;
+  }
+
+  .actions { display: flex; gap: 8px; }
+  .btn-primary {
+    flex: 1; height: 38px; background: #534AB7; color: #EEEDFE;
+    border: none; border-radius: 8px; font-size: 14px; font-weight: 500;
+    cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn-primary:hover { background: #3C3489; }
+  .btn-secondary {
+    height: 38px; padding: 0 14px; background: #f5f4f0;
+    border: 0.5px solid rgba(0,0,0,0.2); border-radius: 8px;
+    font-size: 14px; cursor: pointer; color: #1a1a1a; font-family: inherit;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .btn-secondary:hover { background: #eae9f5; }
+
+  /* Receipt overlay */
+  .receipt-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    display: none; align-items: center; justify-content: center; z-index: 100;
+  }
+  .receipt-overlay.open { display: flex; }
+  .receipt-box {
+    background: #fff; border-radius: 12px; padding: 1.5rem;
+    width: 300px; max-height: 90vh; overflow-y: auto;
+    border: 0.5px solid rgba(0,0,0,0.12);
+  }
+  .receipt-title { font-size: 16px; font-weight: 500; text-align: center; margin-bottom: 4px; }
+  .receipt-sub { font-size: 12px; color: #888; text-align: center; margin-bottom: 14px; }
+  .receipt-divider { border: none; border-top: 0.5px dashed rgba(0,0,0,0.2); margin: 10px 0; }
+  .receipt-item { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+  .receipt-total { display: flex; justify-content: space-between; font-size: 15px; font-weight: 500; padding-top: 8px; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: #534AB7; color: white; padding: 8px 16px;
+    border-radius: 8px; font-size: 13px; opacity: 0;
+    transition: opacity 0.2s; pointer-events: none; z-index: 9999;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<h1 class="app-heading"><i class="ti ti-tool"></i> Hardware Shop Billing System</h1>
+
+<div class="app">
+  <!-- Left: Product catalog -->
+  <div class="panel">
+    <div class="search-bar">
+      <input type="text" id="search" placeholder="Search products…" oninput="filterProducts()" />
+    </div>
+    <div class="cat-filters" id="cat-filters"></div>
+    <p class="section-title">Products — click to add</p>
+    <div class="product-grid" id="product-grid"></div>
+  </div>
+
+  <!-- Right: Bill -->
+  <div class="panel">
+    <div class="bill-header">
+      <span class="bill-title"><i class="ti ti-receipt"></i> Bill</span>
+      <button class="btn-secondary" onclick="clearBill()" style="height:30px;font-size:12px;padding:0 10px">Clear</button>
+    </div>
+
+    <div class="customer-row">
+      <input type="text" id="customer-name" placeholder="Customer name" style="flex:1" />
+    </div>
+
+    <div class="bill-items" id="bill-items">
+      <div class="empty-bill">
+        <i class="ti ti-shopping-cart" style="font-size:28px"></i>
+        No items yet
+      </div>
+    </div>
+
+    <div class="discount-row">
+      <label>Discount %</label>
+      <input type="number" id="discount" min="0" max="100" value="0" oninput="renderTotals()" />
+    </div>
+
+    <div class="totals" id="totals"></div>
+
+    <div class="actions">
+      <button class="btn-primary" onclick="printReceipt()">
+        <i class="ti ti-printer"></i> Print receipt
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Receipt modal -->
+<div class="receipt-overlay" id="receipt-overlay">
+  <div class="receipt-box" id="receipt-box"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const TAX_RATE = 0.16;
+
+  const products = [
+    { id:1,  name:"Hammer",              cat:"Hand Tools",  price:850,  stock:42, icon:"🔨" },
+    { id:2,  name:"Screwdriver set",     cat:"Hand Tools",  price:1200, stock:30, icon:"🪛" },
+    { id:3,  name:"Pliers",              cat:"Hand Tools",  price:650,  stock:55, icon:"🔧" },
+    { id:4,  name:"Tape measure (5m)",   cat:"Measuring",   price:480,  stock:60, icon:"📏" },
+    { id:5,  name:"Spirit level",        cat:"Measuring",   price:1100, stock:18, icon:"🔲" },
+    { id:6,  name:"Drill bit set",       cat:"Power Tools", price:2400, stock:22, icon:"🔩" },
+    { id:7,  name:"Angle grinder",       cat:"Power Tools", price:8500, stock:8,  icon:"⚙️" },
+    { id:8,  name:"Extension cord (5m)", cat:"Electrical",  price:950,  stock:35, icon:"🔌" },
+    { id:9,  name:"PVC conduit",         cat:"Electrical",  price:350,  stock:80, icon:"🟫" },
+    { id:10, name:"Wire stripper",       cat:"Electrical",  price:720,  stock:25, icon:"✂️" },
+    { id:11, name:"Paint brush set",     cat:"Paint",       price:560,  stock:45, icon:"🖌️" },
+    { id:12, name:"Roller set",          cat:"Paint",       price:880,  stock:30, icon:"🎨" },
+    { id:13, name:"PVC glue",            cat:"Adhesives",   price:320,  stock:70, icon:"🧴" },
+    { id:14, name:"Masking tape",        cat:"Adhesives",   price:190,  stock:100,icon:"📦" },
+    { id:15, name:"Wood screws (100pk)", cat:"Fasteners",   price:280,  stock:90, icon:"🔩" },
+    { id:16, name:"Nails (500g)",        cat:"Fasteners",   price:220,  stock:85, icon:"📌" },
+    { id:17, name:"Safety gloves",       cat:"Safety",      price:420,  stock:50, icon:"🧤" },
+    { id:18, name:"Safety goggles",      cat:"Safety",      price:750,  stock:28, icon:"🥽" },
+  ];
+
+  let cart = [];
+  let activeCategory = "All";
+
+  function getCategories() {
+    return ["All", ...new Set(products.map(p => p.cat))];
+  }
+
+  function renderCategories() {
+    const el = document.getElementById("cat-filters");
+    el.innerHTML = getCategories().map(c =>
+      `<button class="cat-btn ${c === activeCategory ? "active" : ""}" onclick="setCategory('${c}')">${c}</button>`
+    ).join("");
+  }
+
+  function setCategory(cat) {
+    activeCategory = cat;
+    renderCategories();
+    filterProducts();
+  }
+
+  function filterProducts() {
+    const q = document.getElementById("search").value.toLowerCase();
+    const filtered = products.filter(p =>
+      (activeCategory === "All" || p.cat === activeCategory) &&
+      (!q || p.name.toLowerCase().includes(q) || p.cat.toLowerCase().includes(q))
+    );
+    const grid = document.getElementById("product-grid");
+    if (!filtered.length) {
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;font-size:13px;color:#aaa;padding:24px 0">No products found</div>`;
+      return;
+    }
+    grid.innerHTML = filtered.map(p => `
+      <div class="prod-card" onclick="addToCart(${p.id})" title="Add to bill">
+        <div class="prod-icon">${p.icon}</div>
+        <div class="prod-name">${p.name}</div>
+        <div class="prod-cat">${p.cat}</div>
+        <div class="prod-price">KES ${p.price.toLocaleString()}</div>
+        <div class="prod-stock">Stock: ${p.stock}</div>
+      </div>
+    `).join("");
+  }
+
+  function addToCart(id) {
+    const product = products.find(p => p.id === id);
+    const existing = cart.find(i => i.id === id);
+    if (existing) {
+      if (existing.qty >= product.stock) { showToast("Max stock reached"); return; }
+      existing.qty++;
+    } else {
+      cart.push({ id, qty: 1 });
+    }
+    renderBill();
+    showToast(`${product.name} added`);
+  }
+
+  function changeQty(id, delta) {
+    const item = cart.find(i => i.id === id);
+    const product = products.find(p => p.id === id);
+    if (!item) return;
+    item.qty += delta;
+    if (item.qty <= 0) {
+      cart = cart.filter(i => i.id !== id);
+    } else if (item.qty > product.stock) {
+      item.qty = product.stock;
+      showToast("Max stock reached");
+    }
+    renderBill();
+  }
+
+  function removeFromCart(id) {
+    cart = cart.filter(i => i.id !== id);
+    renderBill();
+  }
+
+  function clearBill() {
+    cart = [];
+    document.getElementById("discount").value = 0;
+    document.getElementById("customer-name").value = "";
+    renderBill();
+  }
+
+  function renderBill() {
+    const el = document.getElementById("bill-items");
+    if (!cart.length) {
+      el.innerHTML = `<div class="empty-bill"><i class="ti ti-shopping-cart" style="font-size:28px"></i>No items yet</div>`;
+      renderTotals();
+      return;
+    }
+    el.innerHTML = `
+      <div class="bill-item-row header">
+        <span>Item</span><span>Qty</span><span style="text-align:right">Amount</span><span></span>
+      </div>
+      ${cart.map(item => {
+        const p = products.find(pr => pr.id === item.id);
+        return `<div class="bill-item-row">
+          <span style="font-size:12px">${p.icon} ${p.name}</span>
+          <div class="qty-ctrl">
+            <button class="qty-btn" onclick="changeQty(${item.id}, -1)">-</button>
+            <span class="qty-num">${item.qty}</span>
+            <button class="qty-btn" onclick="changeQty(${item.id}, 1)">+</button>
+          </div>
+          <span style="text-align:right;font-size:12px">KES ${(p.price * item.qty).toLocaleString()}</span>
+          <button class="del-btn" onclick="removeFromCart(${item.id})" title="Remove">
+            <i class="ti ti-x"></i>
+          </button>
+        </div>`;
+      }).join("")}
+    `;
+    renderTotals();
+  }
+
+  function getSubtotal() {
+    return cart.reduce((sum, item) => {
+      const p = products.find(pr => pr.id === item.id);
+      return sum + p.price * item.qty;
+    }, 0);
+  }
+
+  function renderTotals() {
+    const el = document.getElementById("totals");
+    if (!cart.length) { el.innerHTML = ""; return; }
+    const subtotal = getSubtotal();
+    const discountPct = Math.min(100, Math.max(0, parseFloat(document.getElementById("discount").value) || 0));
+    const discountAmt = Math.round(subtotal * discountPct / 100);
+    const afterDiscount = subtotal - discountAmt;
+    const tax = Math.round(afterDiscount * TAX_RATE);
+    const grand = afterDiscount + tax;
+    el.innerHTML = `
+      <div class="totals-row"><span style="color:#666">Subtotal</span><span>KES ${subtotal.toLocaleString()}</span></div>
+      ${discountAmt > 0 ? `<div class="totals-row"><span style="color:#666">Discount (${discountPct}%)</span><span style="color:#3B6D11">- KES ${discountAmt.toLocaleString()}</span></div>` : ""}
+      <div class="totals-row"><span style="color:#666">VAT (16%)</span><span>KES ${tax.toLocaleString()}</span></div>
+      <div class="totals-row grand"><span>Total</span><span style="color:#3C3489">KES ${grand.toLocaleString()}</span></div>
+    `;
+  }
+
+  function printReceipt() {
+    if (!cart.length) { showToast("Add items first"); return; }
+    const subtotal = getSubtotal();
+    const discountPct = Math.min(100, Math.max(0, parseFloat(document.getElementById("discount").value) || 0));
+    const discountAmt = Math.round(subtotal * discountPct / 100);
+    const afterDiscount = subtotal - discountAmt;
+    const tax = Math.round(afterDiscount * TAX_RATE);
+    const grand = afterDiscount + tax;
+    const customer = document.getElementById("customer-name").value || "Walk-in customer";
+    const now = new Date();
+    const dateStr = now.toLocaleDateString("en-KE", { day:"2-digit", month:"short", year:"numeric" });
+    const timeStr = now.toLocaleTimeString("en-KE", { hour:"2-digit", minute:"2-digit" });
+    const receiptNo = "RCP-" + Math.floor(1000 + Math.random() * 9000);
+
+    const box = document.getElementById("receipt-box");
+    box.innerHTML = `
+      <div class="receipt-title">🔧 Sinkhan Hardware</div>
+      <div class="receipt-sub">Nairobi, Kenya &bull; Tel: +254 784 714 000</div>
+      <hr class="receipt-divider" />
+      <div style="font-size:12px;color:#888;margin-bottom:8px;display:flex;justify-content:space-between">
+        <span>${receiptNo}</span><span>${dateStr} ${timeStr}</span>
+      </div>
+      <div style="font-size:12px;color:#888;margin-bottom:10px">
+        Customer: <b style="color:#1a1a1a">${customer}</b>
+      </div>
+      <hr class="receipt-divider" />
+      ${cart.map(item => {
+        const p = products.find(pr => pr.id === item.id);
+        return `<div class="receipt-item"><span>${p.name} x${item.qty}</span><span>KES ${(p.price*item.qty).toLocaleString()}</span></div>`;
+      }).join("")}
+      <hr class="receipt-divider" />
+      <div class="receipt-item"><span style="color:#888">Subtotal</span><span>KES ${subtotal.toLocaleString()}</span></div>
+      ${discountAmt > 0 ? `<div class="receipt-item"><span style="color:#888">Discount</span><span style="color:#3B6D11">- KES ${discountAmt.toLocaleString()}</span></div>` : ""}
+      <div class="receipt-item"><span style="color:#888">VAT 16%</span><span>KES ${tax.toLocaleString()}</span></div>
+      <hr class="receipt-divider" />
+      <div class="receipt-total"><span>TOTAL</span><span style="color:#3C3489">KES ${grand.toLocaleString()}</span></div>
+      <hr class="receipt-divider" />
+      <div style="font-size:11px;color:#aaa;text-align:center;margin-top:8px">Thank you for shopping with us!</div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn-primary" onclick="document.getElementById('receipt-overlay').classList.remove('open')">
+          Close
+        </button>
+        <button class="btn-secondary" onclick="window.print()">
+          <i class="ti ti-printer"></i> Print
+        </button>
+      </div>
+    `;
+    document.getElementById("receipt-overlay").classList.add("open");
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 1800);
+  }
+
+  // Init
+  renderCategories();
+  filterProducts();
+</script>
+</body>
+</html>
